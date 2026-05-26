@@ -1,0 +1,36 @@
+# Node
+node_modules/
+.pnpm-store/
+dist/
+.vite/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Secrets / local config
+.env
+.env.local
+.env.*.local
+
+# Tauri build artifacts
+src-tauri/WixTools/
+src-tauri/.cargo/
+
+# tsc -b artifacts
+*.tsbuildinfo
