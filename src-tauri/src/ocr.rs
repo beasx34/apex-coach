@@ -79,12 +79,11 @@ pub mod windows_backend {
             let ibuf: IBuffer = buf.cast().context("cast IBuffer")?;
             unsafe {
                 let bba: windows::Win32::System::WinRT::IBufferByteAccess = ibuf.cast()?;
-                let mut ptr = std::ptr::null_mut();
-                bba.Buffer(&mut ptr).context("IBufferByteAccess::Buffer")?;
+                let ptr = bba.Buffer().context("IBufferByteAccess::Buffer")?;
                 if ptr.is_null() {
                     return Err(anyhow!("null buffer pointer"));
                 }
-                let dst = std::slice::from_raw_parts_mut(ptr as *mut u8, frame.rgba.len());
+                let dst = std::slice::from_raw_parts_mut(ptr, frame.rgba.len());
                 // Swap R <-> B because SoftwareBitmap is BGRA.
                 for (i, chunk) in frame.rgba.chunks_exact(4).enumerate() {
                     let off = i * 4;
