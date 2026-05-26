@@ -81,6 +81,26 @@ LEGEND_KB: dict[str, LegendInfo] = {
         role=LegendRole.CONTROLLER,
         tactical_ult_tip_ru="Ульта готова — поставь Пилон под щитки и финал круга.",
     ),
+    "crypto": LegendInfo(
+        name="Крипто",
+        role=LegendRole.RECON,
+        tactical_ult_tip_ru="Ульта готова — EMP-дрон выбьет щиты и сорвёт укрытия перед пушем.",
+    ),
+    "revenant": LegendInfo(
+        name="Ревенант",
+        role=LegendRole.SKIRMISHER,
+        tactical_ult_tip_ru="Ульта готова — теневая защита для безнаказанного пуша на оборону.",
+    ),
+    "loba": LegendInfo(
+        name="Лоба",
+        role=LegendRole.SUPPORT,
+        tactical_ult_tip_ru="Ульта готова — Чёрный рынок для добора щитов/патронов всей командой.",
+    ),
+    "rampart": LegendInfo(
+        name="Рэмпарт",
+        role=LegendRole.CONTROLLER,
+        tactical_ult_tip_ru="Ульта готова — Шейла под пуш или для удержания чокпойнта в финале.",
+    ),
     "horizon": LegendInfo(
         name="Хорайзон",
         role=LegendRole.SKIRMISHER,
@@ -140,6 +160,11 @@ LEGEND_KB: dict[str, LegendInfo] = {
         name="Альтер",
         role=LegendRole.SKIRMISHER,
         tactical_ult_tip_ru="Ульта готова — портал на эвакуацию команды после неудачного боя.",
+    ),
+    "sparrow": LegendInfo(
+        name="Спэрроу",
+        role=LegendRole.SKIRMISHER,
+        tactical_ult_tip_ru="Ульта готова — лук с разрывными для бурст-урона по группе.",
     ),
 }
 
