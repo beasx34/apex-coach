@@ -20,14 +20,17 @@ from apex_coach.overlay.tip_hub import TipHub
 from apex_coach.overlay.window import OverlayWindow
 from apex_coach.state.aggregator import StateAggregator
 from apex_coach.state.events import EventBus
+from apex_coach.state.models import GameEvent, GameEventInstance, GameState, SquadState
 from apex_coach.tactics.meta import load_meta_notes
 from apex_coach.tactics.rules import RulesEngine
 from apex_coach.utils.logging import get_logger, setup_logging
 from apex_coach.vision.digits import DigitMatcher
 from apex_coach.vision.hud_reader import HudReader
 from apex_coach.vision.kill_feed import KillFeedReader
+from apex_coach.vision.legend_icons import LegendIconMatcher
 from apex_coach.vision.minimap import MinimapReader
 from apex_coach.vision.ocr import OcrEngine
+from apex_coach.vision.squad_panel import SquadPanelReader
 
 _log = get_logger("main")
 
@@ -41,6 +44,7 @@ async def _capture_pipeline(
     hud_reader: HudReader,
     kill_reader: KillFeedReader,
     minimap_reader: MinimapReader,
+    squad_reader: SquadPanelReader,
     aggregator: StateAggregator,
     ai_coach: AiCoach,
 ) -> None:
@@ -50,7 +54,9 @@ async def _capture_pipeline(
             hud = hud_reader.read(frame.bgra)
             kills = kill_reader.read(frame.bgra)
             mini = minimap_reader.read(frame.bgra)
-            state = aggregator.update(hud, kill_events=kills, minimap=mini)
+            squad_result = squad_reader.read(frame.bgra)
+            squad = SquadState(members=squad_result.members)
+            state = aggregator.update(hud, kill_events=kills, minimap=mini, squad=squad)
             ai_coach.update_state(state)
         except Exception:
             _log.exception("Frame pipeline error")
@@ -75,13 +81,15 @@ async def _run_async(settings: Settings, qt_app: Any) -> int:
     hud_reader = HudReader(layout=layout, digits=digits, ocr=ocr)
     kill_reader = KillFeedReader(layout=layout, ocr=ocr)
     minimap_reader = MinimapReader(layout=layout)
+    legend_matcher = LegendIconMatcher(_resources_dir() / "legend_icons")
+    squad_reader = SquadPanelReader(layout=layout, matcher=legend_matcher)
 
     grabber = ScreenGrabber(
         monitor=settings.capture.monitor, target_fps=settings.capture.target_fps
     )
 
     aggregator = StateAggregator(bus=bus)
-    RulesEngine(bus=bus, sink=hub)
+    rules = RulesEngine(bus=bus, sink=hub)
     gemini = GeminiClient(api_key=api_key, model=settings.ai.model)
     meta_notes = load_meta_notes(_resources_dir())
     ai_coach = AiCoach(
@@ -91,6 +99,19 @@ async def _run_async(settings: Settings, qt_app: Any) -> int:
         meta_notes=meta_notes,
         min_interval_s=settings.ai.min_interval_s,
     )
+
+    def _on_legend_detected(_state: GameState, ev: GameEventInstance) -> None:
+        payload = ev.payload
+        if payload is None:
+            return
+        slot_s, _, slug = payload.partition(":")
+        if slot_s != "0" or not slug:
+            return
+        _log.info("Local legend detected: %s", slug)
+        rules.set_legend(slug)
+        ai_coach.set_legend(slug)
+
+    bus.subscribe(GameEvent.LEGEND_DETECTED, _on_legend_detected)
 
     # PySide6 imports kept local so headless tests don't pay the cost.
     from PySide6.QtWidgets import QApplication
@@ -112,7 +133,15 @@ async def _run_async(settings: Settings, qt_app: Any) -> int:
     hotkeys.start()
 
     capture_task = asyncio.create_task(
-        _capture_pipeline(grabber, hud_reader, kill_reader, minimap_reader, aggregator, ai_coach)
+        _capture_pipeline(
+            grabber,
+            hud_reader,
+            kill_reader,
+            minimap_reader,
+            squad_reader,
+            aggregator,
+            ai_coach,
+        )
     )
 
     # Tie asyncio's loop to Qt's: process Qt events periodically.

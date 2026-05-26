@@ -178,6 +178,15 @@ class StateAggregator:
         for slot in prev_alive - cur_alive:
             bus.emit(GameEvent.TEAMMATE_DEATH, cur, payload=str(slot))
 
+        # New legend detections (one event per slot when slug first identified
+        # or changes — handy for the AI coach to call set_legend()).
+        prev_legends = {m.slot: m.legend_slug for m in prev.squad.members}
+        for m in cur.squad.members:
+            if m.legend_slug is None:
+                continue
+            if prev_legends.get(m.slot) != m.legend_slug:
+                bus.emit(GameEvent.LEGEND_DETECTED, cur, payload=f"{m.slot}:{m.legend_slug}")
+
         # Kill feed -> enemy kill / third-party risk
         for ev in kill_events:
             if ev.near_us:
