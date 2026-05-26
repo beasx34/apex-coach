@@ -55,15 +55,15 @@ pub mod windows_backend {
 
     impl WindowsOcr {
         pub fn new() -> Result<Self> {
-            let engine = OcrEngine::TryCreateFromUserProfileLanguages()
-                .context("OcrEngine::TryCreateFromUserProfileLanguages")?;
-            // If user has no language pack, force English (digits only).
-            let engine = if engine.is_ok() {
-                engine
-            } else {
-                let lang =
-                    Language::CreateLanguage(&"en-US".into()).context("create Language en-US")?;
-                OcrEngine::TryCreateFromLanguage(&lang).context("create OcrEngine en-US")?
+            // Prefer the user profile languages; if that fails (no language pack),
+            // fall back to a forced en-US engine, which is sufficient for digit OCR.
+            let engine = match OcrEngine::TryCreateFromUserProfileLanguages() {
+                Ok(e) => e,
+                Err(_) => {
+                    let lang = Language::CreateLanguage(&"en-US".into())
+                        .context("create Language en-US")?;
+                    OcrEngine::TryCreateFromLanguage(&lang).context("create OcrEngine en-US")?
+                }
             };
             Ok(Self { engine })
         }
