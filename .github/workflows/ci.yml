@@ -69,7 +69,6 @@ jobs:
     name: Windows release build
     runs-on: windows-latest
     needs: [frontend, rust-check]
-    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
