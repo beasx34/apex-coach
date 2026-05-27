@@ -80,9 +80,10 @@ class PlayerHud:
 class SquadMember:
     """State of one teammate as inferred from the squad strip."""
 
-    slot: int  # 0..2
+    slot: int  # 0..2 (0 is the local player)
     alive: bool
     knocked: bool
+    legend_slug: str | None = None  # matches a key in LEGEND_KB; None until detected
 
 
 @dataclass(slots=True)
@@ -160,6 +161,9 @@ class GameEvent(Enum):
     OUTSIDE_RING = auto()
     ULTIMATE_READY = auto()
     THIRD_PARTY_RISK = auto()
+    LEGEND_DETECTED = (
+        auto()
+    )  # payload: "slot:slug" (e.g. "0:wraith"); fires once per slot when legend first identified
 
 
 @dataclass(frozen=True, slots=True)
